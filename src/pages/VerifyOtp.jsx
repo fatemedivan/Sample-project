@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Avatar,
   Box,
@@ -11,8 +11,10 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import api from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 export default function OTPVerification() {
+  const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState(() =>
     sessionStorage.getItem("phoneNumber")
   );
@@ -24,13 +26,23 @@ export default function OTPVerification() {
 
   const inputsRef = useRef([]);
 
+  useEffect(() => {
+    const storedOtp = sessionStorage.getItem("otp");
+    if (storedOtp) {
+      const code = storedOtp.split(":")[1]?.trim();
+      if (code && code.length === 6) {
+        const otpArray = code.split("");
+        setOtpValues(otpArray);
+      }
+    }
+  }, []);
   const handleChange = (e, idx) => {
     const value = e.target.value;
     if (/^\d*$/.test(value)) {
       const newOtp = [...otpValues];
       newOtp[idx] = value.slice(-1);
       setOtpValues(newOtp);
-      if (value && idx < 5) inputsRef.current[idx + 1].focus();
+      if (value && idx < 5) inputsRef.current[idx + 1]?.focus();
     }
   };
 
@@ -41,7 +53,7 @@ export default function OTPVerification() {
         newOtp[idx] = "";
         setOtpValues(newOtp);
       } else if (idx > 0) {
-        inputsRef.current[idx - 1].focus();
+        inputsRef.current[idx - 1]?.focus();
       }
     }
   };
@@ -58,13 +70,22 @@ export default function OTPVerification() {
     try {
       setIsLoading(true);
       const response = await api.post("/Auth/verify-otp", {
-        phoneNumber: phoneNumber,
+        phoneNumber,
         otp: code,
       });
-
+      console.log("res", response.data);
+      const userData = response.data.value.loggedInUser;
+      const jwtToken = response.data.value.jwtToken;
+      const role = response.data.value.roles[0];
       if (response.status === 200) {
-        setSnackbarMessage("Code verified successfully.");
+        setSnackbarMessage("Verification successful.");
         setSnackbarSeverity("success");
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", jwtToken);
+        localStorage.setItem("role", role);
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
       } else {
         setSnackbarMessage("Verification failed.");
         setSnackbarSeverity("error");
@@ -72,7 +93,6 @@ export default function OTPVerification() {
     } catch (error) {
       setSnackbarMessage("An error occurred during verification.");
       setSnackbarSeverity("error");
-      console.log("errorrr", error.message);
     } finally {
       setSnackbarOpen(true);
       setIsLoading(false);
@@ -101,7 +121,7 @@ export default function OTPVerification() {
           Enter Verification Code
         </Typography>
 
-        <Box sx={{ display: "flex", gap: 1.5, mb: 3 }}>
+        <Box key={otpValues.join("")} sx={{ display: "flex", gap: 1.5, mb: 3 }}>
           {otpValues.map((val, idx) => (
             <TextField
               key={idx}

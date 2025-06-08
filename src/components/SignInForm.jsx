@@ -32,11 +32,11 @@ export default function SignUpForm() {
       const response = await api.post(
         `/Auth/request-otp?PhoneNumber=${phoneNumber}`
       );
-
+      
       if (response.status === 200 || response.status === 201) {
         setSnackbarMessage("successful and verification code sent.");
         setSnackbarSeverity("success");
-
+        sessionStorage.setItem('otp', response.data.reasons[0])
         setTimeout(() => {
           sessionStorage.setItem("phoneNumber", phoneNumber);
           navigate("/verify-otp");
@@ -48,6 +48,8 @@ export default function SignUpForm() {
     } catch (error) {
       setSnackbarMessage("An error occurred");
       setSnackbarSeverity("error");
+      console.log(error.message);
+      
     } finally {
       setSnackbarOpen(true);
       setIsLoading(false);

@@ -41,18 +41,21 @@ export default function SignUpForm() {
       setIsLoading(true);
 
       const response = await api.post("/user", data);
+      console.log(response);
+      
 
       if (response.status === 200 || response.status === 201) {
         const otpResponse = await api.post(
           `/Auth/request-otp?PhoneNumber=${phoneNumber}`
         );
-
+        console.log('otpresponse',otpResponse);
+        
         if (otpResponse.status === 200) {
           setSnackbarMessage(
             "Registration successful and verification code sent."
           );
           setSnackbarSeverity("success");
-
+          sessionStorage.setItem('otp',otpResponse.data.reasons[0])
           setTimeout(() => {
             sessionStorage.setItem("phoneNumber", phoneNumber);
             navigate("/verify-otp");

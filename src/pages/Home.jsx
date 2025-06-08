@@ -1,9 +1,19 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  useEffect(()=>{
+    const storedUserData = JSON.parse(localStorage.getItem('user'))
+    if (storedUserData) {
+      setFirstName(storedUserData.firstName)
+      setLastName(storedUserData.lastName)
+    }
+    
+  },[])
   return (
     <Box
       sx={{
@@ -21,7 +31,7 @@ export default function Home() {
           mb: 3,
         }}
       >
-        welcome to homepage
+        welcome to homepage {firstName && firstName} - {lastName && lastName}
       </Typography>
 
       <Button
