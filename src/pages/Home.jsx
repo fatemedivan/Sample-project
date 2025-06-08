@@ -31,7 +31,7 @@ export default function Home() {
           mb: 3,
         }}
       >
-        welcome to homepage {firstName && firstName} - {lastName && lastName}
+        welcome to homepage {firstName && firstName} {lastName && lastName}
       </Typography>
 
       <Button
