@@ -14,6 +14,7 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import VerifyOtp from "./pages/VerifyOtp";
 import Home from "./pages/Home";
+import InventoryTransfer from "./pages/InventoryTransfer";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -38,6 +39,7 @@ function App() {
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/inventory-transfer" element={<InventoryTransfer />} />
       </Routes>
     </ThemeProvider>
   );
