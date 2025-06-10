@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   FormControl,
-  Typography
+  Typography,
+  Select,
+  MenuItem,
+  InputLabel,
+  Button,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -10,20 +14,94 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import jalaliday from "jalaliday";
 
+// Assuming this path is correct for your API instance
+import api from "../api/api";
+
 dayjs.extend(jalaliday);
 dayjs.calendar("jalali");
 
 export default function InventoryTransfer() {
+  const [uuid] = useState(() => {
+    return JSON.parse(localStorage.getItem("user")).id;
+  });
+  const [firstName, setFirstName] = useState(() => {
+    return JSON.parse(localStorage.getItem("user")).firstName;
+  });
+  const [lastName, setLastName] = useState(() => {
+    return JSON.parse(localStorage.getItem("user")).lastName;
+  });
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
 
+  const [selectedTransferType, setSelectedTransferType] = useState("");
+  const [selectedTransferStatus, setSelectedTransferStatus] = useState("");
+  const [selectedCarGroup, setSelectedCarGroup] = useState("");
+
+  const [inventoryTransferType] = useState({
+    0: "Service",
+    1: "FreeSale",
+    2: "TransferBetweenWarehouses",
+    3: "Other",
+  });
+  const [inventoryTransferStatus] = useState({
+    0: "Draft",
+    1: "Finalized",
+    2: "Canceled",
+    3: "Deleted",
+  });
+
+  const [carGroup, setCarGroup] = useState([]);
+
+  useEffect(() => {
+    const getCarGroup = async () => {
+      try {
+        const response = await api.get("/CarGroup");
+        if (response && response.data) {
+          setCarGroup(response.data.value);
+        }
+      } catch (error) {
+        console.error("خطا در دریافت CarGroup:", error);
+      }
+    };
+    getCarGroup();
+  }, []);
+
+  const getInventoryTransfer = async () => {
+    try {
+      const params = {
+        AcceptanceNumber: "12345",
+        TransferType: selectedTransferType,
+        Status: selectedTransferStatus,
+        CustomerName: `${firstName} ${lastName}`,
+        NationalCode: "0012345678",
+        WarehouseKeeperUserId: uuid,
+        CarGroupId: selectedCarGroup,
+        DestinationDealershipCode: "D123",
+        DestinationDealershipName: "نمایندگی غرب",
+        LicensePlateNumber: "12الف345",
+        FromDate: fromDate,
+        ToDate: toDate,
+        PageNumber: 1,
+        PageSize: 60,
+      };
+
+      const response = await api.get("/InventoryTransfer", { params });
+      console.log(response);
+      
+    } catch (error) {
+      console.error("خطا در دریافت اطلاعات InventoryTransfer:", error);
+    }
+  };
+
   return (
     <div style={{ direction: "rtl", padding: "30px" }}>
-      <Typography variant="h5" gutterBottom>تحویل قطعه</Typography>
+      <Typography variant="h5" gutterBottom>
+        تحویل قطعه
+      </Typography>
 
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <FormControl sx={{ flex: 1 }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+          <FormControl sx={{ flex: 1, minWidth: 150 }}>
             <DatePicker
               label="از تاریخ"
               value={fromDate}
@@ -41,7 +119,7 @@ export default function InventoryTransfer() {
             />
           </FormControl>
 
-          <FormControl sx={{ flex: 1 }}>
+          <FormControl sx={{ flex: 1, minWidth: 150 }}>
             <DatePicker
               label="تا تاریخ"
               value={toDate}
@@ -58,7 +136,74 @@ export default function InventoryTransfer() {
               }}
             />
           </FormControl>
+
+          <FormControl sx={{ flex: 1, minWidth: 180 }} fullWidth>
+            <InputLabel id="inventory-transfer-type-label">
+              نوع درخواست
+            </InputLabel>
+            <Select
+              labelId="inventory-transfer-type-label"
+              id="inventory-transfer-type-select"
+              value={selectedTransferType}
+              label="نوع درخواست"
+              onChange={(event) => setSelectedTransferType(event.target.value)}
+            >
+              <MenuItem value="">
+                <em>همه</em>
+              </MenuItem>
+              {Object.entries(inventoryTransferType).map(([key, value]) => (
+                <MenuItem key={key} value={value}>
+                  {value}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ flex: 1, minWidth: 180 }} fullWidth>
+            <InputLabel id="inventory-transfer-status-label">وضعیت</InputLabel>
+            <Select
+              labelId="inventory-transfer-status-label"
+              id="inventory-transfer-status-select"
+              value={selectedTransferStatus}
+              label="وضعیت"
+              onChange={(event) =>
+                setSelectedTransferStatus(event.target.value)
+              }
+            >
+              <MenuItem value="">
+                <em>همه</em>
+              </MenuItem>
+              {Object.entries(inventoryTransferStatus).map(([key, value]) => (
+                <MenuItem key={key} value={value}>
+                  {value}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ flex: 1, minWidth: 150 }} fullWidth>
+            <InputLabel id="car-group-label">نوع خودرو</InputLabel>
+            <Select
+              labelId="car-group-label"
+              id="car-group-select"
+              value={selectedCarGroup}
+              label="نوع خودرو"
+              onChange={(event) => setSelectedCarGroup(event.target.value)}
+            >
+              <MenuItem value="">
+                <em>همه</em>
+              </MenuItem>
+              {carGroup.map((group) => (
+                <MenuItem key={group.id} value={group.id}>
+                  {group.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
+        <Button onClick={() => getInventoryTransfer()} variant="contained">
+          ثبت درخواست
+        </Button>
       </LocalizationProvider>
     </div>
   );
