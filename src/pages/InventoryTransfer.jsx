@@ -7,6 +7,8 @@ import {
   MenuItem,
   InputLabel,
   Button,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -14,7 +16,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import jalaliday from "jalaliday";
 
-// Assuming this path is correct for your API instance
 import api from "../api/api";
 
 dayjs.extend(jalaliday);
@@ -29,6 +30,11 @@ export default function InventoryTransfer() {
   });
   const [lastName, setLastName] = useState(() => {
     return JSON.parse(localStorage.getItem("user")).lastName;
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
   });
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
@@ -86,13 +92,26 @@ export default function InventoryTransfer() {
       };
 
       const response = await api.get("/InventoryTransfer", { params });
-      console.log(response);
-      
+      if (response && response.data) {
+        setSnackbar({
+          open: true,
+          message: response.data.reasons[0],
+          severity: "success",
+        });
+      }
     } catch (error) {
       console.error("خطا در دریافت اطلاعات InventoryTransfer:", error);
+      setSnackbar({
+          open: true,
+          message: "error",
+          severity: "error",
+        });
     }
   };
 
+   const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
   return (
     <div style={{ direction: "rtl", padding: "30px" }}>
       <Typography variant="h5" gutterBottom>
@@ -205,6 +224,21 @@ export default function InventoryTransfer() {
           ثبت درخواست
         </Button>
       </LocalizationProvider>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
