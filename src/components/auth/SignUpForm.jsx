@@ -12,11 +12,13 @@ import {
   Alert,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import api from "../api/api";
+import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 
 export default function SignUpForm() {
   const navigate = useNavigate();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,28 +29,50 @@ export default function SignUpForm() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const data = {
+      user: {
+        firstName,
+        lastName,
+        phoneNumber,
+      },
+    };
+
     try {
       setIsLoading(true);
-      const response = await api.post(
-        `/Auth/request-otp?PhoneNumber=${phoneNumber}`
-      );
+
+      const response = await api.post("/user", data);
+      console.log(response);
       
+
       if (response.status === 200 || response.status === 201) {
-        setSnackbarMessage("successful and verification code sent.");
-        setSnackbarSeverity("success");
-        sessionStorage.setItem('otp', response.data.reasons[0])
-        setTimeout(() => {
-          sessionStorage.setItem("phoneNumber", phoneNumber);
-          navigate("/verify-otp");
-        }, 2000);
+        const otpResponse = await api.post(
+          `/Auth/request-otp?PhoneNumber=${phoneNumber}`
+        );
+        console.log('otpresponse',otpResponse);
+        
+        if (otpResponse.status === 200) {
+          setSnackbarMessage(
+            "Registration successful and verification code sent."
+          );
+          setSnackbarSeverity("success");
+          sessionStorage.setItem('otp',otpResponse.data.reasons[0])
+          setTimeout(() => {
+            sessionStorage.setItem("phoneNumber", phoneNumber);
+            navigate("/verify-otp");
+          }, 2000);
+        } else {
+          setSnackbarMessage(
+            "Registration succeeded but sending verification code failed."
+          );
+          setSnackbarSeverity("warning");
+        }
       } else {
-        setSnackbarMessage("failed to sign in");
+        setSnackbarMessage("Registration failed.");
         setSnackbarSeverity("error");
       }
     } catch (error) {
-      setSnackbarMessage("An error occurred");
+      setSnackbarMessage("An error occurred during registration.");
       setSnackbarSeverity("error");
-      console.log(error.message);
       
     } finally {
       setSnackbarOpen(true);
@@ -75,9 +99,32 @@ export default function SignUpForm() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign in
+          Sign up
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <TextField
+            inputProps={{ maxLength: 12 }}
+            margin="normal"
+            required
+            fullWidth
+            id="firstName"
+            label="First Name"
+            name="firstName"
+            autoFocus
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <TextField
+            inputProps={{ maxLength: 12 }}
+            margin="normal"
+            required
+            fullWidth
+            name="lastName"
+            label="Last Name"
+            id="lastName"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
           <TextField
             inputProps={{ maxLength: 11 }}
             margin="normal"
@@ -97,12 +144,12 @@ export default function SignUpForm() {
             sx={{ mt: 3, mb: 2 }}
             disabled={isLoading}
           >
-            {isLoading ? "loading..." : "sign in"}
+            {isLoading ? "loading..." : "sign up"}
           </Button>
           <Grid container justifyContent="flex-end">
             <Grid>
-              <Link href="/sign-up" variant="body2">
-                {"Dont have an account? Sign up"}
+              <Link href="/sign-In" variant="body2">
+                {"Already have an account? Sign In"}
               </Link>
             </Grid>
           </Grid>

@@ -17,12 +17,13 @@ import dayjs from "dayjs";
 import jalaliday from "jalaliday";
 
 import api from "../api/api";
+import Dropdown from "../components/inventoryTransfer/DropDown";
 
 dayjs.extend(jalaliday);
 dayjs.calendar("jalali");
 
 export default function InventoryTransfer() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(localStorage.getItem("user") || {});
 
   const [uuid, setUuid] = useState(user?.id || "");
   const [firstName, setFirstName] = useState(user?.firstName || "");
@@ -178,66 +179,38 @@ export default function InventoryTransfer() {
             />
           </FormControl>
 
-          <FormControl sx={{ flex: 1, minWidth: 180 }} fullWidth>
-            <InputLabel id="inventory-transfer-type-label">
-              نوع درخواست
-            </InputLabel>
-            <Select
-              labelId="inventory-transfer-type-label"
-              value={selectedTransferType}
-              label="نوع درخواست"
-              onChange={(event) => setSelectedTransferType(event.target.value)}
-            >
-              <MenuItem value="">
-                <em>همه</em>
-              </MenuItem>
-              {Object.entries(inventoryTransferType).map(([key, value]) => (
-                <MenuItem key={key} value={value}>
-                  {value}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Dropdown
+            label="نوع درخواست"
+            value={selectedTransferType}
+            onChange={(e) => setSelectedTransferType(e.target.value)}
+            labelId="transfer-type"
+            options={Object.entries(inventoryTransferType).map(([k, v]) => ({
+              value: v,
+              label: v,
+            }))}
+          />
 
-          <FormControl sx={{ flex: 1, minWidth: 180 }} fullWidth>
-            <InputLabel id="inventory-transfer-status-label">وضعیت</InputLabel>
-            <Select
-              labelId="inventory-transfer-status-label"
-              value={selectedTransferStatus}
-              label="وضعیت"
-              onChange={(event) =>
-                setSelectedTransferStatus(event.target.value)
-              }
-            >
-              <MenuItem value="">
-                <em>همه</em>
-              </MenuItem>
-              {Object.entries(inventoryTransferStatus).map(([key, value]) => (
-                <MenuItem key={key} value={value}>
-                  {value}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Dropdown
+            label="وضعیت"
+            value={selectedTransferStatus}
+            onChange={(e) => setSelectedTransferStatus(e.target.value)}
+            labelId="transfer-status"
+            options={Object.entries(inventoryTransferStatus).map(([k, v]) => ({
+              value: v,
+              label: v,
+            }))}
+          />
 
-          <FormControl sx={{ flex: 1, minWidth: 150 }} fullWidth>
-            <InputLabel id="car-group-label">نوع خودرو</InputLabel>
-            <Select
-              labelId="car-group-label"
-              value={selectedCarGroup}
-              label="نوع خودرو"
-              onChange={(event) => setSelectedCarGroup(event.target.value)}
-            >
-              <MenuItem value="">
-                <em>همه</em>
-              </MenuItem>
-              {carGroup.map((group) => (
-                <MenuItem key={group.id} value={group.id}>
-                  {group.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Dropdown
+            label="نوع خودرو"
+            value={selectedCarGroup}
+            onChange={(e) => setSelectedCarGroup(e.target.value)}
+            labelId="car-group"
+            options={carGroup.map((group) => ({
+              value: group.id,
+              label: group.name,
+            }))}
+          />
         </Box>
 
         <Box sx={{ display: "flex", gap: 2 }}>
