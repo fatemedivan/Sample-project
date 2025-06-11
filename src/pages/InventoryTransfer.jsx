@@ -69,7 +69,7 @@ export default function InventoryTransfer() {
   useEffect(() => {
     const getCarGroup = async () => {
       try {
-        const response = await api.get("/CarGroup");
+        const response = await api("/CarGroup");
         if (response && response.data) {
           setCarGroup(response.data.value);
         }
