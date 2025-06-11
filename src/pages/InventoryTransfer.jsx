@@ -38,25 +38,41 @@ export default function InventoryTransfer() {
   });
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
-
   const [selectedTransferType, setSelectedTransferType] = useState("");
   const [selectedTransferStatus, setSelectedTransferStatus] = useState("");
   const [selectedCarGroup, setSelectedCarGroup] = useState("");
+  const [carGroup, setCarGroup] = useState([]);
 
-  const [inventoryTransferType] = useState({
+  const inventoryTransferType = {
     0: "Service",
     1: "FreeSale",
     2: "TransferBetweenWarehouses",
     3: "Other",
-  });
-  const [inventoryTransferStatus] = useState({
+  };
+
+  const inventoryTransferStatus = {
     0: "Draft",
     1: "Finalized",
     2: "Canceled",
     3: "Deleted",
-  });
+  };
 
-  const [carGroup, setCarGroup] = useState([]);
+  const params = {
+    AcceptanceNumber: "12345",
+    TransferType: selectedTransferType,
+    Status: selectedTransferStatus,
+    CustomerName: `${firstName} ${lastName}`,
+    NationalCode: "0012345678",
+    WarehouseKeeperUserId: uuid,
+    CarGroupId: selectedCarGroup,
+    DestinationDealershipCode: "D123",
+    DestinationDealershipName: "نمایندگی غرب",
+    LicensePlateNumber: "12الف345",
+    FromDate: fromDate,
+    ToDate: toDate,
+    PageNumber: 1,
+    PageSize: 60,
+  };
 
   useEffect(() => {
     const getCarGroup = async () => {
@@ -74,23 +90,6 @@ export default function InventoryTransfer() {
 
   const getInventoryTransfer = async () => {
     try {
-      const params = {
-        AcceptanceNumber: "12345",
-        TransferType: selectedTransferType,
-        Status: selectedTransferStatus,
-        CustomerName: `${firstName} ${lastName}`,
-        NationalCode: "0012345678",
-        WarehouseKeeperUserId: uuid,
-        CarGroupId: selectedCarGroup,
-        DestinationDealershipCode: "D123",
-        DestinationDealershipName: "نمایندگی غرب",
-        LicensePlateNumber: "12الف345",
-        FromDate: fromDate,
-        ToDate: toDate,
-        PageNumber: 1,
-        PageSize: 60,
-      };
-
       const response = await api.get("/InventoryTransfer", { params });
       if (response && response.data) {
         setSnackbar({
@@ -102,16 +101,43 @@ export default function InventoryTransfer() {
     } catch (error) {
       console.error("خطا در دریافت اطلاعات InventoryTransfer:", error);
       setSnackbar({
-          open: true,
-          message: "error",
-          severity: "error",
-        });
+        open: true,
+        message: "خطا در دریافت اطلاعات",
+        severity: "error",
+      });
     }
   };
 
-   const handleCloseSnackbar = () => {
+  const getExcel = async () => {
+    try {
+      const response = await api.get(
+        "/InventoryTransfer/full-details-report-excel",
+        {
+          params,
+          responseType: "blob",
+        }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "inventory-transfer.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("خطا در دریافت فایل اکسل:", error);
+      setSnackbar({
+        open: true,
+        message: "خطا در دریافت فایل اکسل",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
+
   return (
     <div style={{ direction: "rtl", padding: "30px" }}>
       <Typography variant="h5" gutterBottom>
@@ -162,7 +188,6 @@ export default function InventoryTransfer() {
             </InputLabel>
             <Select
               labelId="inventory-transfer-type-label"
-              id="inventory-transfer-type-select"
               value={selectedTransferType}
               label="نوع درخواست"
               onChange={(event) => setSelectedTransferType(event.target.value)}
@@ -182,7 +207,6 @@ export default function InventoryTransfer() {
             <InputLabel id="inventory-transfer-status-label">وضعیت</InputLabel>
             <Select
               labelId="inventory-transfer-status-label"
-              id="inventory-transfer-status-select"
               value={selectedTransferStatus}
               label="وضعیت"
               onChange={(event) =>
@@ -204,7 +228,6 @@ export default function InventoryTransfer() {
             <InputLabel id="car-group-label">نوع خودرو</InputLabel>
             <Select
               labelId="car-group-label"
-              id="car-group-select"
               value={selectedCarGroup}
               label="نوع خودرو"
               onChange={(event) => setSelectedCarGroup(event.target.value)}
@@ -220,9 +243,15 @@ export default function InventoryTransfer() {
             </Select>
           </FormControl>
         </Box>
-        <Button onClick={() => getInventoryTransfer()} variant="contained">
-          ثبت درخواست
-        </Button>
+
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button onClick={getInventoryTransfer} variant="contained">
+            ثبت درخواست
+          </Button>
+          <Button onClick={getExcel} variant="outlined">
+            دریافت فایل اکسل
+          </Button>
+        </Box>
       </LocalizationProvider>
 
       <Snackbar
