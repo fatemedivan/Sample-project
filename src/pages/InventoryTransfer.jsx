@@ -82,7 +82,7 @@ export default function InventoryTransfer() {
 
   const getInventoryTransfer = async () => {
     try {
-      const response = await api.get("/InventoryTransfer", { params });
+      const response = await api("/InventoryTransfer", { params });
       if (response && response.data) {
         setSnackbar({
           open: true,
@@ -102,7 +102,7 @@ export default function InventoryTransfer() {
 
   const getExcel = async () => {
     try {
-      const response = await api.get(
+      const response = await api(
         "/InventoryTransfer/full-details-report-excel",
         {
           params,
