@@ -22,15 +22,11 @@ dayjs.extend(jalaliday);
 dayjs.calendar("jalali");
 
 export default function InventoryTransfer() {
-  const [uuid] = useState(() => {
-    return JSON.parse(localStorage.getItem("user")).id;
-  });
-  const [firstName, setFirstName] = useState(() => {
-    return JSON.parse(localStorage.getItem("user")).firstName;
-  });
-  const [lastName, setLastName] = useState(() => {
-    return JSON.parse(localStorage.getItem("user")).lastName;
-  });
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const [uuid, setUuid] = useState(user?.id || "");
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
