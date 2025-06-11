@@ -55,16 +55,11 @@ export default function InventoryTransfer() {
   };
 
   const params = {
-    AcceptanceNumber: "12345",
     TransferType: selectedTransferType,
     Status: selectedTransferStatus,
     CustomerName: `${firstName} ${lastName}`,
-    NationalCode: "0012345678",
     WarehouseKeeperUserId: uuid,
     CarGroupId: selectedCarGroup,
-    DestinationDealershipCode: "D123",
-    DestinationDealershipName: "نمایندگی غرب",
-    LicensePlateNumber: "12الف345",
     FromDate: fromDate,
     ToDate: toDate,
     PageNumber: 1,
