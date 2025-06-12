@@ -1,134 +1,53 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  FormControl,
-  Typography,
-  Select,
-  MenuItem,
-  InputLabel,
-  Button,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Box, Typography, Button, FormControl, Alert } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import jalaliday from "jalaliday";
 
-import api from "../api/api";
+import {
+  transferTypes,
+  transferStatuses,
+} from "../constantes/inventoryTransfer";
+import getCarGroups from "../services/inventoryTransfer/getCarGroups";
+import getInventoryTransfer from "../services/inventoryTransfer/getInventoryTransfer";
+import downloadExcel from "../services/inventoryTransfer/downloadExcel";
 import Dropdown from "../components/inventoryTransfer/DropDown";
 
 dayjs.extend(jalaliday);
 dayjs.calendar("jalali");
 
 export default function InventoryTransfer() {
-  const user = JSON.parse(localStorage.getItem("user") || {});
-
-  const [uuid, setUuid] = useState(user?.id || "");
-  const [firstName, setFirstName] = useState(user?.firstName || "");
-  const [lastName, setLastName] = useState(user?.lastName || "");
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
+  const [filters, setFilters] = useState({
+    fromDate: null,
+    toDate: null,
+    transferType: "",
+    transferStatus: "",
+    carGroupId: "",
   });
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
-  const [selectedTransferType, setSelectedTransferType] = useState("");
-  const [selectedTransferStatus, setSelectedTransferStatus] = useState("");
-  const [selectedCarGroup, setSelectedCarGroup] = useState("");
-  const [carGroup, setCarGroup] = useState([]);
 
-  const inventoryTransferType = {
-    0: "Service",
-    1: "FreeSale",
-    2: "TransferBetweenWarehouses",
-    3: "Other",
-  };
+  const [carGroups, setCarGroups] = useState([]);
+  const [alert, setAlert] = useState({ message: "", severity: "success" });
 
-  const inventoryTransferStatus = {
-    0: "Draft",
-    1: "Finalized",
-    2: "Canceled",
-    3: "Deleted",
+  const showAlert = (message, severity = "success") => {
+    setAlert({ message, severity });
+    setTimeout(() => setAlert({ message: "" }), 3000);
   };
 
   const params = {
-    TransferType: selectedTransferType,
-    Status: selectedTransferStatus,
-    CustomerName: `${firstName} ${lastName}`,
-    WarehouseKeeperUserId: uuid,
-    CarGroupId: selectedCarGroup,
-    FromDate: fromDate,
-    ToDate: toDate,
     PageNumber: 1,
     PageSize: 60,
+    // TransferType: filters.transferType,
+    // Status: filters.transferStatus,
+    // CarGroupId: filters.carGroupId,
+    // FromDate: filters.fromDate,
+    // ToDate: filters.toDate,
   };
 
   useEffect(() => {
-    const getCarGroup = async () => {
-      try {
-        const response = await api("/CarGroup");
-        if (response && response.data) {
-          setCarGroup(response.data.value);
-        }
-      } catch (error) {
-        console.error("خطا در دریافت CarGroup:", error);
-      }
-    };
-    getCarGroup();
+    getCarGroups((msg) => showAlert(msg, "error")).then(setCarGroups);
   }, []);
-
-  const getInventoryTransfer = async () => {
-    try {
-      const response = await api("/InventoryTransfer", { params });
-      if (response && response.data) {
-        setSnackbar({
-          open: true,
-          message: response.data.reasons[0],
-          severity: "success",
-        });
-      }
-    } catch (error) {
-      console.error("خطا در دریافت اطلاعات InventoryTransfer:", error);
-      setSnackbar({
-        open: true,
-        message: "خطا در دریافت اطلاعات",
-        severity: "error",
-      });
-    }
-  };
-
-  const getExcel = async () => {
-    try {
-      const response = await api(
-        "/InventoryTransfer/full-details-report-excel",
-        {
-          params,
-          responseType: "blob",
-        }
-      );
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "inventory-transfer.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error("خطا در دریافت فایل اکسل:", error);
-      setSnackbar({
-        open: true,
-        message: "خطا در دریافت فایل اکسل",
-        severity: "error",
-      });
-    }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
 
   return (
     <div style={{ direction: "rtl", padding: "30px" }}>
@@ -136,21 +55,25 @@ export default function InventoryTransfer() {
         تحویل قطعه
       </Typography>
 
+      {alert.message && (
+        <Alert severity={alert.severity} sx={{ mb: 2 }}>
+          {alert.message}
+        </Alert>
+      )}
+
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
           <FormControl sx={{ flex: 1, minWidth: 150 }}>
             <DatePicker
               label="از تاریخ"
-              value={fromDate}
-              onChange={(newValue) => setFromDate(newValue)}
+              value={filters.fromDate}
+              onChange={(value) => setFilters({ ...filters, fromDate: value })}
               format="YYYY/MM/DD"
               slotProps={{
                 textField: {
                   fullWidth: true,
                   variant: "outlined",
-                  InputLabelProps: {
-                    shrink: true,
-                  },
+                  InputLabelProps: { shrink: true }
                 },
               }}
             />
@@ -159,16 +82,14 @@ export default function InventoryTransfer() {
           <FormControl sx={{ flex: 1, minWidth: 150 }}>
             <DatePicker
               label="تا تاریخ"
-              value={toDate}
-              onChange={(newValue) => setToDate(newValue)}
+              value={filters.toDate}
+              onChange={(value) => setFilters({ ...filters, toDate: value })}
               format="YYYY/MM/DD"
               slotProps={{
                 textField: {
                   fullWidth: true,
                   variant: "outlined",
-                  InputLabelProps: {
-                    shrink: true,
-                  },
+                  InputLabelProps: { shrink: true },
                 },
               }}
             />
@@ -176,32 +97,38 @@ export default function InventoryTransfer() {
 
           <Dropdown
             label="نوع درخواست"
-            value={selectedTransferType}
-            onChange={(e) => setSelectedTransferType(e.target.value)}
+            value={filters.transferType}
+            onChange={(e) =>
+              setFilters({ ...filters, transferType: e.target.value })
+            }
             labelId="transfer-type"
-            options={Object.entries(inventoryTransferType).map(([k, v]) => ({
-              value: v,
+            options={Object.entries(transferTypes).map(([k, v]) => ({
+              value: k,
               label: v,
             }))}
           />
 
           <Dropdown
             label="وضعیت"
-            value={selectedTransferStatus}
-            onChange={(e) => setSelectedTransferStatus(e.target.value)}
+            value={filters.transferStatus}
+            onChange={(e) =>
+              setFilters({ ...filters, transferStatus: e.target.value })
+            }
             labelId="transfer-status"
-            options={Object.entries(inventoryTransferStatus).map(([k, v]) => ({
-              value: v,
+            options={Object.entries(transferStatuses).map(([k, v]) => ({
+              value: k,
               label: v,
             }))}
           />
 
           <Dropdown
             label="نوع خودرو"
-            value={selectedCarGroup}
-            onChange={(e) => setSelectedCarGroup(e.target.value)}
+            value={filters.carGroupId}
+            onChange={(e) =>
+              setFilters({ ...filters, carGroupId: e.target.value })
+            }
             labelId="car-group"
-            options={carGroup.map((group) => ({
+            options={carGroups.map((group) => ({
               value: group.id,
               label: group.name,
             }))}
@@ -209,29 +136,32 @@ export default function InventoryTransfer() {
         </Box>
 
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button onClick={getInventoryTransfer} variant="contained">
+          <Button
+            variant="contained"
+            onClick={() =>
+              getInventoryTransfer(
+                params,
+                (msg) => showAlert(msg, "error"),
+                (msg) => showAlert(msg, "success")
+              )
+            }
+          >
             ثبت درخواست
           </Button>
-          <Button onClick={getExcel} variant="outlined">
+          <Button
+            variant="outlined"
+            onClick={() =>
+              downloadExcel(
+                params,
+                (msg) => showAlert(msg, "error"),
+                (msg) => showAlert(msg, "success")
+              )
+            }
+          >
             دریافت فایل اکسل
           </Button>
         </Box>
       </LocalizationProvider>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </div>
   );
 }

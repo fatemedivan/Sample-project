@@ -1,28 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Avatar,
-  Box,
-  Button,
-  Container,
-  TextField,
-  Typography,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Avatar, Box, Button, Container, TextField, Typography, Alert } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import api from "../api/api";
 import { useNavigate } from "react-router-dom";
+import { verifyOtp } from "../services/auth/verifyOtp";
+
 
 export default function OTPVerification() {
   const navigate = useNavigate();
-  const [phoneNumber, setPhoneNumber] = useState(() =>
-    sessionStorage.getItem("phoneNumber")
-  );
+  const [phoneNumber] = useState(() => sessionStorage.getItem("phoneNumber"));
   const [otpValues, setOtpValues] = useState(Array(6).fill(""));
   const [isLoading, setIsLoading] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [alert, setAlert] = useState({ open: false, message: "", severity: "success" });
 
   const inputsRef = useRef([]);
 
@@ -31,11 +19,11 @@ export default function OTPVerification() {
     if (storedOtp) {
       const code = storedOtp.split(":")[1]?.trim();
       if (code && code.length === 6) {
-        const otpArray = code.split("");
-        setOtpValues(otpArray);
+        setOtpValues(code.split(""));
       }
     }
   }, []);
+
   const handleChange = (e, idx) => {
     const value = e.target.value;
     if (/^\d*$/.test(value)) {
@@ -59,44 +47,10 @@ export default function OTPVerification() {
   };
 
   const handleSubmit = async () => {
-    const code = otpValues.join("");
-    if (code.length !== 6) {
-      setSnackbarMessage("Please enter the full 6-digit code.");
-      setSnackbarSeverity("warning");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await api.post("/Auth/verify-otp", {
-        phoneNumber,
-        otp: code,
-      });
-      console.log("res", response.data);
-      const userData = response.data.value.loggedInUser;
-      const jwtToken = response.data.value.jwtToken;
-      const role = response.data.value.roles[0];
-      if (response.status === 200) {
-        setSnackbarMessage("Verification successful.");
-        setSnackbarSeverity("success");
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", jwtToken);
-        localStorage.setItem("role", role);
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
-      } else {
-        setSnackbarMessage("Verification failed.");
-        setSnackbarSeverity("error");
-      }
-    } catch (error) {
-      setSnackbarMessage("An error occurred during verification.");
-      setSnackbarSeverity("error");
-    } finally {
-      setSnackbarOpen(true);
-      setIsLoading(false);
-    }
+    setIsLoading(true);
+    const result = await verifyOtp(phoneNumber, otpValues, navigate);
+    setAlert({ open: true, message: result.message, severity: result.severity });
+    setIsLoading(false);
   };
 
   return (
@@ -121,7 +75,13 @@ export default function OTPVerification() {
           Enter Verification Code
         </Typography>
 
-        <Box key={otpValues.join("")} sx={{ display: "flex", gap: 1.5, mb: 3 }}>
+        {alert.open && (
+          <Alert severity={alert.severity} sx={{ width: "100%", mb: 2 }} onClose={() => setAlert({ ...alert, open: false })}>
+            {alert.message}
+          </Alert>
+        )}
+
+        <Box sx={{ display: "flex", gap: 1.5, mb: 3 }}>
           {otpValues.map((val, idx) => (
             <TextField
               key={idx}
@@ -144,30 +104,10 @@ export default function OTPVerification() {
           ))}
         </Box>
 
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleSubmit}
-          disabled={isLoading}
-        >
+        <Button variant="contained" fullWidth onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? "Verifying..." : "Verify Code"}
         </Button>
       </Box>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }

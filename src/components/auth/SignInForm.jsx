@@ -8,52 +8,35 @@ import {
   Box,
   Typography,
   Container,
-  Snackbar,
   Alert,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
+import { signIn } from "../../services/auth/signIn";
 
-export default function SignUpForm() {
+export default function SignInForm() {
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertSeverity, setAlertSeverity] = useState("success");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
 
-    try {
-      setIsLoading(true);
-      const response = await api.post(
-        `/Auth/request-otp?PhoneNumber=${phoneNumber}`
-      );
-      
-      if (response.status === 200 || response.status === 201) {
-        setSnackbarMessage("successful and verification code sent.");
-        setSnackbarSeverity("success");
-        sessionStorage.setItem('otp', response.data.reasons[0])
-        setTimeout(() => {
-          sessionStorage.setItem("phoneNumber", phoneNumber);
-          navigate("/verify-otp");
-        }, 2000);
-      } else {
-        setSnackbarMessage("failed to sign in");
-        setSnackbarSeverity("error");
-      }
-    } catch (error) {
-      setSnackbarMessage("An error occurred");
-      setSnackbarSeverity("error");
-      console.log(error.message);
-      
-    } finally {
-      setSnackbarOpen(true);
-      setIsLoading(false);
+    const result = await signIn({ phoneNumber });
+
+    setAlertMessage(result.message);
+    setAlertSeverity(result.severity);
+
+    if (result.success) {
+      setTimeout(() => {
+        navigate("/verify-otp");
+      }, 2000);
     }
+
+    setIsLoading(false);
   };
 
   return (
@@ -77,6 +60,13 @@ export default function SignUpForm() {
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
+
+        {alertMessage && (
+          <Alert severity={alertSeverity} sx={{ mt: 2, width: "100%" }}>
+            {alertMessage}
+          </Alert>
+        )}
+
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
             inputProps={{ maxLength: 11 }}
@@ -99,29 +89,16 @@ export default function SignUpForm() {
           >
             {isLoading ? "loading..." : "sign in"}
           </Button>
+
           <Grid container justifyContent="flex-end">
             <Grid>
               <Link href="/sign-up" variant="body2">
-                {"Dont have an account? Sign up"}
+                {"Don't have an account? Sign up"}
               </Link>
             </Grid>
           </Grid>
         </Box>
       </Box>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }

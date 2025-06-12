@@ -8,12 +8,11 @@ import {
   Box,
   Typography,
   Container,
-  Snackbar,
   Alert,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
+import { signUp } from "../../services/auth/signUp";
 
 export default function SignUpForm() {
   const navigate = useNavigate();
@@ -22,62 +21,23 @@ export default function SignUpForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertSeverity, setAlertSeverity] = useState("success");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
 
-    const data = {
-      user: {
-        firstName,
-        lastName,
-        phoneNumber,
-      },
-    };
+    const result = await signUp({
+      firstName,
+      lastName,
+      phoneNumber,
+      navigate,
+    });
 
-    try {
-      setIsLoading(true);
-
-      const response = await api.post("/user", data);
-      console.log(response);
-      
-
-      if (response.status === 200 || response.status === 201) {
-        const otpResponse = await api.post(
-          `/Auth/request-otp?PhoneNumber=${phoneNumber}`
-        );
-        console.log('otpresponse',otpResponse);
-        
-        if (otpResponse.status === 200) {
-          setSnackbarMessage(
-            "Registration successful and verification code sent."
-          );
-          setSnackbarSeverity("success");
-          sessionStorage.setItem('otp',otpResponse.data.reasons[0])
-          setTimeout(() => {
-            sessionStorage.setItem("phoneNumber", phoneNumber);
-            navigate("/verify-otp");
-          }, 2000);
-        } else {
-          setSnackbarMessage(
-            "Registration succeeded but sending verification code failed."
-          );
-          setSnackbarSeverity("warning");
-        }
-      } else {
-        setSnackbarMessage("Registration failed.");
-        setSnackbarSeverity("error");
-      }
-    } catch (error) {
-      setSnackbarMessage("An error occurred during registration.");
-      setSnackbarSeverity("error");
-      
-    } finally {
-      setSnackbarOpen(true);
-      setIsLoading(false);
-    }
+    setAlertMessage(result.message);
+    setAlertSeverity(result.severity);
+    setIsLoading(false);
   };
 
   return (
@@ -101,6 +61,13 @@ export default function SignUpForm() {
         <Typography component="h1" variant="h5">
           Sign up
         </Typography>
+
+        {alertMessage && (
+          <Alert severity={alertSeverity} sx={{ mt: 2, width: "100%" }}>
+            {alertMessage}
+          </Alert>
+        )}
+
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
             inputProps={{ maxLength: 12 }}
@@ -146,6 +113,7 @@ export default function SignUpForm() {
           >
             {isLoading ? "loading..." : "sign up"}
           </Button>
+
           <Grid container justifyContent="flex-end">
             <Grid>
               <Link href="/sign-In" variant="body2">
@@ -155,20 +123,6 @@ export default function SignUpForm() {
           </Grid>
         </Box>
       </Box>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }
