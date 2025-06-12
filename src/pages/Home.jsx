@@ -4,16 +4,25 @@ import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  useEffect(()=>{
-    const storedUserData = JSON.parse(localStorage.getItem('user'))
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUserData = localStorage.getItem("user");
     if (storedUserData) {
-      setFirstName(storedUserData.firstName)
-      setLastName(storedUserData.lastName)
+      setUser(JSON.parse(storedUserData));
+    } else {
+      setUser(null);
     }
-    
-  },[])
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    setUser(null);
+    navigate("/sign-in");
+  };
+
   return (
     <Box
       sx={{
@@ -22,6 +31,7 @@ export default function Home() {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
+        gap: 3,
       }}
     >
       <Typography
@@ -31,7 +41,7 @@ export default function Home() {
           mb: 3,
         }}
       >
-        welcome to homepage {firstName && firstName} {lastName && lastName}
+        welcome to homepage {user ? `${user.firstName} ${user.lastName}` : ""}
       </Typography>
 
       <Button
@@ -48,6 +58,24 @@ export default function Home() {
       >
         Get started
       </Button>
+
+      {user && (
+        <Button
+          onClick={handleLogout}
+          variant="outlined"
+          color="error"
+          size="large"
+          sx={{
+            px: 4,
+            py: 1.5,
+            fontSize: "1rem",
+            textTransform: "none",
+            borderRadius: 3,
+          }}
+        >
+          Logout
+        </Button>
+      )}
     </Box>
   );
 }
