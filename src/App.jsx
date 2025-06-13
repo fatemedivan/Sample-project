@@ -13,6 +13,7 @@ import Dashboard from "./components/common/Dashboard";
 import ProtectedRoute from "./components/common/ProtectedRout";
 import { useAuth } from "./context/AuthContext";
 import { ThemeProviderContext } from "./context/ThemeContext";
+import PublicRoute from "./components/common/PublicRout";
 
 function App() {
   const location = useLocation();
@@ -28,9 +29,11 @@ function App() {
       {shouldShowNavbar && <Navbar user={user} onLogout={logout} />}
       <Routes>
         <Route path="/" element={<Home user={user} />} />
-        <Route path="/sign-in" element={<SignIn />} />
-        <Route path="/sign-up" element={<SignUp />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route element={<PublicRoute user={user}/>}>
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+        </Route>
         <Route element={<ProtectedRoute />}>
           <Route path="/inventory-transfer" element={<InventoryTransfer />} />
           <Route path="/upload" element={<Upload />} />
