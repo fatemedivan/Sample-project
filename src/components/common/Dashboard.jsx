@@ -1,24 +1,17 @@
-import React, { useContext } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { AppProvider, DashboardLayout } from "@toolpad/core";
 import { Box, Typography, Button } from "@mui/material";
 import { Logout as LogoutIcon } from "@mui/icons-material";
-import darkTheme from "../../theme/darkTheme";
-import lightTheme from "../../theme/lightTheme";
 import { useAuth } from "../../context/AuthContext";
-import { ThemeModeContext } from "../../App"; // 👈 ایمپورت کانتکست
-
-const themes = {
-  light: lightTheme,
-  dark: darkTheme,
-};
+import { useThemeMode } from "../../context/ThemeContext";
 
 function ToolpadDashboard({ user }) {
   const { logout } = useAuth();
-  const { themeMode } = useContext(ThemeModeContext); // 👈 گرفتن themeMode
+  const { theme } = useThemeMode();
 
   return (
-    <AppProvider navigation={[]} theme={themes[themeMode]}>
+    <AppProvider navigation={[]} theme={theme}>
       <DashboardLayout>
         <Box
           sx={{
@@ -30,7 +23,7 @@ function ToolpadDashboard({ user }) {
           }}
         >
           <Typography variant="h4">
-            welcome to dashboard{user.firstName}
+            welcome to dashboard {user.firstName}
           </Typography>
 
           <Button

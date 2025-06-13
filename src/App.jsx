@@ -1,67 +1,63 @@
-import React, { useState, useEffect, createContext } from "react";
-import { Route, Routes } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
-
-import lightTheme from "./theme/lightTheme";
+import React, { useEffect, useState } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 import darkTheme from "./theme/darkTheme";
+import lightTheme from "./theme/lightTheme";
 
-import Button from "@mui/material/Button";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
-import VerifyOtp from "./pages/VerifyOtp";
+import Navbar from "./components/common/Navbar";
 import Home from "./pages/Home";
-import InventoryTransfer from "./pages/InventoryTransfer";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import VerifyOtp from "./pages/VerifyOtp";
 import Upload from "./pages/Upload";
-import ProtectedRoute from "./components/common/ProtectedRout";
-
-// 💡 ساخت context برای اشتراک‌گذاری themeMode
-export const ThemeModeContext = createContext();
+import InventoryTransfer from "./pages/InventoryTransfer";
+import Dashboard from "./components/common/Dashboard";
+import ProtectedRoute from './components/common/ProtectedRout'
 
 function App() {
-  const [themeMode, setThemeMode] = useState("light");
+  const [user, setUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const saved = localStorage.getItem("themeMode");
-    if (saved) setThemeMode(saved);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
-  const toggleTheme = () => {
-    const next = themeMode === "light" ? "dark" : "light";
-    setThemeMode(next);
-    localStorage.setItem("themeMode", next);
+  const logout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/sign-in");
   };
 
-  return (
-    <ThemeModeContext.Provider value={{ themeMode, toggleTheme }}>
-      <ThemeProvider theme={themeMode === "dark" ? darkTheme : lightTheme}>
-        <CssBaseline />
-        <Button
-          sx={{ m: 2 }}
-          onClick={toggleTheme}
-          variant="contained"
-        >
-          {themeMode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
-        </Button>
+  const hideNavbarRoutes = ["/sign-in", "/sign-up", "/verify-otp"];
+  const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route element={<ProtectedRoute />}>
+  return (
+    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+      <CssBaseline />
+
+      {shouldShowNavbar && <Navbar user={user} onLogout={logout} />}
+
+      
+      <Routes>
+        <Route path="/" element={<Home user={user} />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route element={<ProtectedRoute />}>
             <Route
               path="/inventory-transfer"
               element={<InventoryTransfer />}
             />
             <Route path="/upload" element={<Upload />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Route>
-        </Routes>
-      </ThemeProvider>
-    </ThemeModeContext.Provider>
+      </Routes>
+    </ThemeProvider>
   );
 }
 
