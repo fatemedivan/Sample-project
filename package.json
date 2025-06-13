@@ -17,6 +17,7 @@
     "@mui/material": "^7.1.1",
     "@mui/x-date-pickers": "^8.5.1",
     "@mui/x-date-pickers-pro": "^8.5.1",
+    "@toolpad/core": "^0.16.0",
     "axios": "^1.9.0",
     "dayjs": "^1.11.13",
     "i18n": "^0.15.1",

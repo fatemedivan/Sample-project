@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, createContext } from "react";
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -16,37 +16,52 @@ import VerifyOtp from "./pages/VerifyOtp";
 import Home from "./pages/Home";
 import InventoryTransfer from "./pages/InventoryTransfer";
 import Upload from "./pages/Upload";
-import ProtectedRoute from "./components/protectedRout";
+import ProtectedRoute from "./components/common/ProtectedRout";
+
+// 💡 ساخت context برای اشتراک‌گذاری themeMode
+export const ThemeModeContext = createContext();
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [themeMode, setThemeMode] = useState("light");
 
-  const toggleTheme = () => setDarkMode(!darkMode);
+  useEffect(() => {
+    const saved = localStorage.getItem("themeMode");
+    if (saved) setThemeMode(saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = themeMode === "light" ? "dark" : "light";
+    setThemeMode(next);
+    localStorage.setItem("themeMode", next);
+  };
 
   return (
-    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-      <CssBaseline />
-      <Button
-        sx={{
-          m: 2,
-          backgroundColor: "main.primary",
-        }}
-        onClick={toggleTheme}
-        variant="contained"
-      >
-        {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-      </Button>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/sign-up" element={<SignUp />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/sign-in" element={<SignIn />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/inventory-transfer" element={<InventoryTransfer />} />
-          <Route path="/upload" element={<Upload />} />
-        </Route>
-      </Routes>
-    </ThemeProvider>
+    <ThemeModeContext.Provider value={{ themeMode, toggleTheme }}>
+      <ThemeProvider theme={themeMode === "dark" ? darkTheme : lightTheme}>
+        <CssBaseline />
+        <Button
+          sx={{ m: 2 }}
+          onClick={toggleTheme}
+          variant="contained"
+        >
+          {themeMode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+        </Button>
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/inventory-transfer"
+              element={<InventoryTransfer />}
+            />
+            <Route path="/upload" element={<Upload />} />
+          </Route>
+        </Routes>
+      </ThemeProvider>
+    </ThemeModeContext.Provider>
   );
 }
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import Dashboard from "../components/common/Dashboard";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -13,11 +13,12 @@ export default function Home() {
       setUser(JSON.parse(storedUserData));
     } else {
       setUser(null);
-      navigate('/sign-in')
     }
   }, []);
 
-  const { logout } = useAuth();
+  if (user) {
+    return <Dashboard user={user} />;
+  }
 
   return (
     <Box
@@ -30,48 +31,28 @@ export default function Home() {
         gap: 3,
       }}
     >
-      <Typography
-        variant="h3"
-        sx={{
-          fontWeight: "bold",
-          mb: 3,
-        }}
-      >
-        welcome to homepage {user ? `${user.firstName} ${user.lastName}` : ""}
+      <Typography variant="h3" fontWeight="bold">
+        welcome
       </Typography>
 
-      <Button
-        onClick={() => navigate("/sign-up")}
-        variant="contained"
-        size="large"
-        sx={{
-          px: 4,
-          py: 1.5,
-          fontSize: "1rem",
-          textTransform: "none",
-          borderRadius: 3,
-        }}
-      >
-        Get started
-      </Button>
-
-      {user && (
+      <Box sx={{ display: "flex", gap: 2 }}>
         <Button
-          onClick={logout}
-          variant="outlined"
-          color="error"
+          onClick={() => navigate("/sign-in")}
+          variant="contained"
           size="large"
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: "1rem",
-            textTransform: "none",
-            borderRadius: 3,
-          }}
+          sx={{ borderRadius: 3 }}
         >
-          Logout
+          sign in
         </Button>
-      )}
+        <Button
+          onClick={() => navigate("/sign-up")}
+          variant="outlined"
+          size="large"
+          sx={{ borderRadius: 3 }}
+        >
+          sign up
+        </Button>
+      </Box>
     </Box>
   );
 }

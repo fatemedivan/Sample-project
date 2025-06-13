@@ -6,11 +6,15 @@ import { StrictMode } from "react";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 
+import { ThemeProviderContext } from "./context/ThemeContext";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ThemeProviderContext>
+          <App />
+        </ThemeProviderContext>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>
