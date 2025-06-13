@@ -1,13 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { AppProvider, DashboardLayout } from "@toolpad/core";
-import { Box, Typography, Button } from "@mui/material";
-import { Logout as LogoutIcon } from "@mui/icons-material";
-import { useAuth } from "../../context/AuthContext";
+import { Box, Typography } from "@mui/material";
+
 import { useThemeMode } from "../../context/ThemeContext";
 
-function ToolpadDashboard({ user }) {
-  const { logout } = useAuth();
+function Dashboard({ user }) {
   const { theme } = useThemeMode();
 
   return (
@@ -15,33 +13,33 @@ function ToolpadDashboard({ user }) {
       <DashboardLayout>
         <Box
           sx={{
-            p: 4,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 2,
+            p: { xs: 2, sm: 3, md: 4 },
+            width: "100%",
+            overflowX: "hidden",
+            boxSizing: "border-box",
           }}
         >
-          <Typography variant="h4">
-            welcome to dashboard {user.firstName}
-          </Typography>
-
-          <Button
-            onClick={logout}
-            variant="outlined"
-            color="error"
-            startIcon={<LogoutIcon />}
+          <Typography
+            variant="h4"
+            sx={{
+              fontSize: {
+                xs: "1.8rem",
+                sm: "2.2rem",
+                md: "2.8rem",
+              },
+              mb: { xs: 3, md: 4 },
+            }}
           >
-            logout
-          </Button>
+            welcome to dashboard {user?.firstName}
+          </Typography>
         </Box>
       </DashboardLayout>
     </AppProvider>
   );
 }
 
-ToolpadDashboard.propTypes = {
+Dashboard.propTypes = {
   user: PropTypes.object.isRequired,
 };
 
-export default ToolpadDashboard;
+export default Dashboard;

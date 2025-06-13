@@ -13,9 +13,11 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
 import { signIn } from "../../services/auth/signIn";
+import { useAuth } from "../../context/AuthContext";
 
 export default function SignInForm() {
   const navigate = useNavigate();
+  const { updateAuthData } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -31,6 +33,10 @@ export default function SignInForm() {
     setAlertSeverity(result.severity);
 
     if (result.success) {
+      if (result.token && result.user) {
+        updateAuthData(result.token, result.user);
+      }
+
       setTimeout(() => {
         navigate("/verify-otp");
       }, 500);
@@ -91,7 +97,7 @@ export default function SignInForm() {
           </Button>
 
           <Grid container justifyContent="flex-end">
-            <Grid>
+            <Grid item>
               <Link href="/sign-up" variant="body2">
                 {"Don't have an account? Sign up"}
               </Link>

@@ -1,6 +1,11 @@
 import api from "../../api/api";
 
-export async function verifyOtp(phoneNumber, otpValues, navigate) {
+export async function verifyOtp(
+  phoneNumber,
+  otpValues,
+  navigate,
+  updateAuthData
+) {
   const code = otpValues.join("");
   if (code.length !== 6) {
     return {
@@ -15,14 +20,13 @@ export async function verifyOtp(phoneNumber, otpValues, navigate) {
       phoneNumber,
       otp: code,
     });
+
     if (response.status === 200) {
       const userData = response.data.value.loggedInUser;
       const jwtToken = response.data.value.jwtToken;
       const role = response.data.value.roles[0];
 
-      localStorage.setItem("user", JSON.stringify(userData));
-      localStorage.setItem("token", jwtToken);
-      localStorage.setItem("role", role);
+      updateAuthData(jwtToken, userData, role);
 
       setTimeout(() => {
         navigate("/");
@@ -34,16 +38,21 @@ export async function verifyOtp(phoneNumber, otpValues, navigate) {
         severity: "success",
       };
     } else {
+      const errorMessage = response.data?.message || "Verification failed.";
       return {
         success: false,
-        message: "Verification failed.",
+        message: errorMessage,
         severity: "error",
       };
     }
   } catch (error) {
+    console.error("Error during OTP verification:", error);
+    const errorMessage =
+      error.response?.data?.message ||
+      "An unexpected error occurred during verification.";
     return {
       success: false,
-      message: "An error occurred during verification.",
+      message: errorMessage,
       severity: "error",
     };
   }

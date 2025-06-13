@@ -1,16 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Avatar, Box, Button, Container, TextField, Typography, Alert } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Alert,
+} from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
 import { verifyOtp } from "../services/auth/verifyOtp";
-
+import { useAuth } from "../context/AuthContext";
 
 export default function OTPVerification() {
   const navigate = useNavigate();
+  // phoneNumber را از sessionStorage بخوانید
   const [phoneNumber] = useState(() => sessionStorage.getItem("phoneNumber"));
   const [otpValues, setOtpValues] = useState(Array(6).fill(""));
   const [isLoading, setIsLoading] = useState(false);
-  const [alert, setAlert] = useState({ open: false, message: "", severity: "success" });
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const { updateAuthData } = useAuth();
 
   const inputsRef = useRef([]);
 
@@ -22,7 +37,11 @@ export default function OTPVerification() {
         setOtpValues(code.split(""));
       }
     }
-  }, []);
+
+    if (!phoneNumber) {
+      navigate("/sign-in");
+    }
+  }, [phoneNumber, navigate]);
 
   const handleChange = (e, idx) => {
     const value = e.target.value;
@@ -30,6 +49,7 @@ export default function OTPVerification() {
       const newOtp = [...otpValues];
       newOtp[idx] = value.slice(-1);
       setOtpValues(newOtp);
+
       if (value && idx < 5) inputsRef.current[idx + 1]?.focus();
     }
   };
@@ -48,8 +68,34 @@ export default function OTPVerification() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    const result = await verifyOtp(phoneNumber, otpValues, navigate);
-    setAlert({ open: true, message: result.message, severity: result.severity });
+
+    if (!phoneNumber) {
+      setAlert({
+        open: true,
+        message: "شماره تلفن موجود نیست. لطفاً دوباره وارد شوید.",
+        severity: "error",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await verifyOtp(
+      phoneNumber,
+      otpValues,
+      navigate,
+      updateAuthData
+    );
+    setAlert({
+      open: true,
+      message: result.message,
+      severity: result.severity,
+    });
+
+    if (result.success) {
+      sessionStorage.removeItem("otp");
+      sessionStorage.removeItem("phoneNumber");
+    }
+
     setIsLoading(false);
   };
 
@@ -72,11 +118,15 @@ export default function OTPVerification() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography variant="h5" sx={{ mb: 2 }}>
-          Enter Verification Code
+          verify otp
         </Typography>
 
         {alert.open && (
-          <Alert severity={alert.severity} sx={{ width: "100%", mb: 2 }} onClose={() => setAlert({ ...alert, open: false })}>
+          <Alert
+            severity={alert.severity}
+            sx={{ width: "100%", mb: 2 }}
+            onClose={() => setAlert({ ...alert, open: false })}
+          >
             {alert.message}
           </Alert>
         )}
@@ -104,8 +154,13 @@ export default function OTPVerification() {
           ))}
         </Box>
 
-        <Button variant="contained" fullWidth onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? "Verifying..." : "Verify Code"}
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? "verifying..." : "verify"}
         </Button>
       </Box>
     </Container>

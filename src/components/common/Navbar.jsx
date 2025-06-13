@@ -1,9 +1,20 @@
 import React from "react";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import { useThemeMode } from "../../context/ThemeContext";
 
 function Navbar({ user, onLogout }) {
   const navigate = useNavigate();
+  const { mode, toggleTheme } = useThemeMode();
 
   return (
     <AppBar position="static" color="primary">
@@ -12,12 +23,12 @@ function Navbar({ user, onLogout }) {
           MyApp
         </Typography>
 
-        <Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
+            {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
           {user ? (
             <>
-              <Typography variant="body1" component="span" sx={{ mr: 2 }}>
-                hi {user.firstName}
-              </Typography>
               <Button color="inherit" onClick={onLogout}>
                 logout
               </Button>
