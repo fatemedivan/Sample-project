@@ -26,7 +26,7 @@ export async function verifyOtp(phoneNumber, otpValues, navigate) {
 
       setTimeout(() => {
         navigate("/");
-      }, 1000);
+      }, 500);
 
       return {
         success: true,

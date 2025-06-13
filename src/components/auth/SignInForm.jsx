@@ -33,7 +33,7 @@ export default function SignInForm() {
     if (result.success) {
       setTimeout(() => {
         navigate("/verify-otp");
-      }, 2000);
+      }, 500);
     }
 
     setIsLoading(false);

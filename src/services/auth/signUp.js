@@ -14,7 +14,7 @@ export const signUp = async ({ firstName, lastName, phoneNumber, navigate }) => 
 
         setTimeout(() => {
           navigate("/verify-otp");
-        }, 1000);
+        }, 500);
 
         return {
           success: true,
