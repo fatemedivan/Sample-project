@@ -1,5 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, FormControl, Alert } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  FormControl,
+  Alert,
+  Pagination,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  CircularProgress,
+} from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -28,6 +43,9 @@ export default function InventoryTransfer() {
   });
 
   const [carGroups, setCarGroups] = useState([]);
+  const [paginationInfo, setPaginationInfo] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ message: "", severity: "success" });
 
   const showAlert = (message, severity = "success") => {
@@ -36,21 +54,44 @@ export default function InventoryTransfer() {
   };
 
   const params = {
-    PageNumber: 1,
-    PageSize: 60,
-    // TransferType: filters.transferType,
-    // Status: filters.transferStatus,
-    // CarGroupId: filters.carGroupId,
-    // FromDate: filters.fromDate,
-    // ToDate: filters.toDate,
+    PageNumber: currentPage,
+    PageSize: 2,
+    TransferType: filters.transferType,
+    Status: filters.transferStatus,
+    CarGroupId: filters.carGroupId,
+    FromDate: filters.fromDate,
+    ToDate: filters.toDate,
   };
 
   useEffect(() => {
     getCarGroups((msg) => showAlert(msg, "error")).then(setCarGroups);
   }, []);
 
+  useEffect(() => {
+    setLoading(true);
+    setPaginationInfo(null); 
+
+    getInventoryTransfer(
+      params,
+      (msg) => {
+        showAlert(msg, "error");
+        setLoading(false);
+      },
+      (msg) => {
+        showAlert(msg, "success");
+        setLoading(false);
+      },
+      setPaginationInfo,
+      paginationInfo
+    );
+  }, [currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1); 
+  }, [filters]);
+
   return (
-    <div style={{ direction: "rtl", padding: "30px" }}>
+    <Box sx={{ direction: "rtl", p: 4 }}>
       <Typography variant="h5" gutterBottom>
         تحویل قطعه
       </Typography>
@@ -73,7 +114,7 @@ export default function InventoryTransfer() {
                 textField: {
                   fullWidth: true,
                   variant: "outlined",
-                  InputLabelProps: { shrink: true }
+                  InputLabelProps: { shrink: true },
                 },
               }}
             />
@@ -135,16 +176,27 @@ export default function InventoryTransfer() {
           />
         </Box>
 
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
           <Button
             variant="contained"
-            onClick={() =>
+            onClick={() => {
+              setCurrentPage(1);
+              setLoading(true);
+              setPaginationInfo(null);
               getInventoryTransfer(
-                params,
-                (msg) => showAlert(msg, "error"),
-                (msg) => showAlert(msg, "success")
-              )
-            }
+                { ...params, PageNumber: 1 },
+                (msg) => {
+                  showAlert(msg, "error");
+                  setLoading(false);
+                },
+                (msg) => {
+                  showAlert(msg, "success");
+                  setLoading(false);
+                },
+                setPaginationInfo,
+                paginationInfo
+              );
+            }}
           >
             ثبت درخواست
           </Button>
@@ -162,6 +214,58 @@ export default function InventoryTransfer() {
           </Button>
         </Box>
       </LocalizationProvider>
-    </div>
+
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {!loading && paginationInfo && (
+        <>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ردیف</TableCell>
+                  <TableCell>شماره پذیرش</TableCell>
+                  <TableCell>نام انباردار</TableCell>
+                  <TableCell>نوع خودرو</TableCell>
+                  <TableCell>تاریخ ایجاد</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginationInfo.items.map((item, index) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      {paginationInfo.rowIndexStart + index}
+                    </TableCell>
+                    <TableCell>{item.acceptanceNumber}</TableCell>
+                    <TableCell>{item.warehouseKeeperName}</TableCell>
+                    <TableCell>{item.carName || "-"}</TableCell>
+                    <TableCell>
+                      {dayjs(item.creationDate)
+                        .calendar("jalali")
+                        .format("YYYY/MM/DD HH:mm")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+            <Pagination
+              count={paginationInfo.totalPages}
+              page={currentPage}
+              onChange={(e, value) => setCurrentPage(value)}
+              color="primary"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        </>
+      )}
+    </Box>
   );
 }
