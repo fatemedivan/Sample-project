@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -12,16 +13,11 @@ export default function Home() {
       setUser(JSON.parse(storedUserData));
     } else {
       setUser(null);
+      navigate('/sign-in')
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    setUser(null);
-    navigate("/sign-in");
-  };
+  const { logout } = useAuth();
 
   return (
     <Box
@@ -61,7 +57,7 @@ export default function Home() {
 
       {user && (
         <Button
-          onClick={handleLogout}
+          onClick={logout}
           variant="outlined"
           color="error"
           size="large"
